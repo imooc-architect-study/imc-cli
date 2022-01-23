@@ -23,7 +23,15 @@
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
   "dependencies": {
+    "@imc-cli/init": "file:../init",
+    "@imc-cli/utils": "file:../utils",
+    "colors": "^1.4.0",
+    "commander": "^8.3.0",
+    "dotenv": "^14.2.0",
     "import-local": "^3.1.0",
-    "@imc-cli/utils": "file:../utils"
+    "path-exists": "^4.0.0",
+    "root-check": "^1.0.0",
+    "semver": "^7.3.5",
+    "userhome": "^1.0.0"
   }
 }

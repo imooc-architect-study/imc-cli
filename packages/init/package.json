@@ -1,9 +1,9 @@
 {
-  "name": "@imc-cli/utils",
+  "name": "@imc-cli/init",
   "version": "1.0.0",
-  "description": "imc-cli utils",
+  "description": "imc-cli init",
   "author": "c10342 <1376023740@qq.com>",
-  "homepage": "",
+  "homepage": "https://github.com/imooc-architect-study/imc-cli#readme",
   "license": "ISC",
   "main": "lib/index.js",
   "directories": {
@@ -16,15 +16,14 @@
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imooc-architect-study/imc-cli.git"
+  },
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
-  "dependencies": {
-    "axios": "^0.25.0",
-    "npminstall": "^5.4.0",
-    "npmlog": "^6.0.0",
-    "pkg-dir": "^5.0.0",
-    "semver": "^7.3.5",
-    "url-join": "^4.0.1"
+  "bugs": {
+    "url": "https://github.com/imooc-architect-study/imc-cli/issues"
   }
 }
