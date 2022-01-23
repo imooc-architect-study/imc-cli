@@ -8,7 +8,7 @@ const userhome = require("userhome");
 const pathExists = require("path-exists").sync;
 const dotenv = require("dotenv");
 const { Command } = require("commander");
-const { log, npmUtils,exec } = require("@imc-cli/utils");
+const { log, npmUtils, exec } = require("@imc-cli/utils");
 // const init = require("@imc-cli/init");
 const constants = require("./const.js");
 const pkg = require("../package.json");
@@ -22,6 +22,9 @@ async function core() {
     registerCommander();
   } catch (error) {
     log.error(error.message);
+    if (process.env.LOG_LEVEL === "verbose") {
+      console.log(error);
+    }
   }
 }
 
@@ -89,7 +92,7 @@ async function checkGlobalUpdate() {
   // 获取当前版本号和模块名
   const currentVersion = pkg.version;
   const npmName = pkg.name;
-  const latestVersion = await npmUtils.getNpmLatestVersion(
+  const latestVersion = await npmUtils.getNpmLatestSemverVersion(
     currentVersion,
     npmName
   );
@@ -122,8 +125,8 @@ function registerCommander() {
     .action(exec);
 
   // 监听参数
-    program.on("option:debug", () => {
-        const options = program.opts()
+  program.on("option:debug", () => {
+    const options = program.opts();
     if (options.debug) {
       process.env.LOG_LEVEL = "verbose";
     } else {
@@ -133,8 +136,8 @@ function registerCommander() {
   });
 
   // 监听targetPath参数，添加到全局的环境变量中，方便使用
-    program.on("option:targetPath", () => {
-    const options = program.opts()
+  program.on("option:targetPath", () => {
+    const options = program.opts();
     process.env.CLI_TARGET_PATH = options.targetPath;
   });
 

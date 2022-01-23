@@ -39,24 +39,34 @@ async function getNpmVersions(npmName, registry) {
 }
 
 // 获取大于baseVersion的版本号
-function getNpmGtVersions(baseVersion, versions) {
+function getLatestSemverVersion(baseVersion, versions) {
   return versions
     .filter((version) => semver.satisfies(version, `^${baseVersion}`))
     .sort((a, b) => semver.gt(b, a));
 }
 
 // 获取最新的版本号
-async function getNpmLatestVersion(baseVersion, npmName, registry) {
+async function getNpmLatestSemverVersion(baseVersion, npmName, registry) {
   const versions = await getNpmVersions(npmName, registry);
-  const latestVersions = getNpmGtVersions(baseVersion, versions);
+  const latestVersions = getLatestSemverVersion(baseVersion, versions);
   if (latestVersions && latestVersions.length > 0) {
     return latestVersions[0];
   }
   return null;
 }
 
+// 找出包名的最新版本号
+async function getNpmLatestVersion(npmName, registry) {
+  const versions = await getNpmVersions(npmName, registry);
+  if (versions && versions.length > 0) {
+    return versions.sort((a, b) => semver.gt(b, a))[0];
+  }
+  return null;
+}
+
 module.exports = {
   getNpmInfo,
-  getNpmLatestVersion,
-  getDefaultRegistry
+  getNpmLatestSemverVersion,
+  getDefaultRegistry,
+  getNpmLatestVersion
 };
