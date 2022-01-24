@@ -31,8 +31,6 @@ async function core() {
 async function prepare() {
   // 检查脚手架版本号
   checkPkgVersion();
-  // 检查node版本号
-  checkNodeVersion();
   //   root账号启动检查和自动降级功
   checkRoot();
   //   检查用户主目录是否存在
@@ -47,16 +45,6 @@ function checkPkgVersion() {
   log.info("cli", pkg.version);
 }
 
-function checkNodeVersion() {
-  const currentVersion = process.version;
-  const lowestVersion = constants.LOWEST_NODE_VERSION;
-  // 比对版本号
-  if (!semver.gte(currentVersion, lowestVersion)) {
-    throw new Error(
-      colors.red(`imc-cli 需要安装 v${lowestVersion} 以上版本的 Node.js`)
-    );
-  }
-}
 
 function checkRoot() {
   // 检查root账号，如果用户是通过root去创建的文件，其他用户去修改会导致报错
@@ -116,7 +104,7 @@ function registerCommander() {
     .version(pkg.version)
     // 参数
     .option("-d,--debug", "是否开启调试模式", false)
-    .option("-tp,--targetPath <targetPath>", "是否指定本地调试文件路径", "111");
+    .option("-tp,--targetPath <targetPath>", "是否指定本地调试文件路径");
 
   // 注册init命令
   program

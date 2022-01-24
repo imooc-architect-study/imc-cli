@@ -38,7 +38,9 @@ class Package {
     }
   }
 
+  // 根据版本号拼接出缓存路径
   getSpecificCacheFilePath(version) {
+    // 路径是根据pnpm下载的规则来的
     return  path.resolve(
       this.storeDir,
       `_${this.cacheFilePathPrefix}@${version}@${this.packageName}`
@@ -99,17 +101,25 @@ class Package {
 
   // 获取入口文件路径
   getRootFilePath() {
-    // 1、找到package.json所在的目录
-    const dir = pkgDir(this.targetPath);
-    if (dir) {
-      // 2、读取package.json
-      const pkgFile = require(path.resolve(dir, "package.json"));
-      // 3、寻找入口文件
-      if (pkgFile && pkgFile.main) {
-        return path.resolve(dir, pkgFile.main);
+    function _getFilePath(targetPath) {
+      // 1、找到package.json所在的目录
+      const dir = pkgDir(targetPath);
+      if (dir) {
+        // 2、读取package.json
+        const pkgFile = require(path.resolve(dir, "package.json"));
+        // 3、寻找入口文件
+        if (pkgFile && pkgFile.main) {
+          return path.resolve(dir, pkgFile.main);
+        }
       }
+      return null;
     }
-    return null;
+    if (this.storeDir) {
+      // 使用缓存的情况
+      return _getFilePath(this.cacheFilePath)
+    } else {
+      return _getFilePath(this.targetPath)
+    }
   }
 }
 

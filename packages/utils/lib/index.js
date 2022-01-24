@@ -10,4 +10,6 @@ const Package = require("./package/index.js");
 
 const types = require("./types/index.js");
 
-module.exports = { log, npmUtils, exec, Package, types };
+const Command = require('./command/index.js')
+
+module.exports = { log, npmUtils, exec, Package, types,Command };

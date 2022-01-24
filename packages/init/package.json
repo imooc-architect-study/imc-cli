@@ -25,5 +25,8 @@
   },
   "bugs": {
     "url": "https://github.com/imooc-architect-study/imc-cli/issues"
+  },
+  "dependencies": {
+    "@imc-cli/utils": "file:../utils"
   }
 }
