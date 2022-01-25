@@ -64,11 +64,11 @@ async function exec() {
       const cmd = args[args.length - 1]
       const o = Object.create(null)
       // 过滤掉一些参数
-      Object.keys(cmd).forEach(key => {
-        if (cmd.hasOwnProperty(key) && !key.startsWith('_') && key !== 'parent') {
-          o[key] = cmd[key]
-        }
-      })
+      // Object.keys(cmd).forEach(key => {
+      //   if (cmd.hasOwnProperty(key) && !key.startsWith('_') && key !== 'parent') {
+      //     o[key] = cmd[key]
+      //   }
+      // })
       o.opts = cmd.opts()
       args[args.length - 1] = o
       const code = `require('${rootFile.replace(/\\/g, '/')}').call(null, ${JSON.stringify(args)})`;

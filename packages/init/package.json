@@ -27,6 +27,9 @@
     "url": "https://github.com/imooc-architect-study/imc-cli/issues"
   },
   "dependencies": {
-    "@imc-cli/utils": "file:../utils"
+    "@imc-cli/utils": "file:../utils",
+    "fs-extra": "^10.0.0",
+    "inquirer": "^8.2.0",
+    "semver": "^7.3.5"
   }
 }
