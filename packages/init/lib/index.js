@@ -23,13 +23,19 @@ class InitCommand extends Command {
   async exec() {
     try {
       // 1、准备阶段
-      await this.prepare();
       // 2、下载模板
       // 3、安装模板
+      const projectInfo = await this.prepare();
+      if (projectInfo) {
+        log.verbose('projectInfo', projectInfo)
+        this.downloadTemplate()
+      }
     } catch (error) {
       log.error(error.message);
     }
   }
+
+  downloadTemplate(){}
 
   async prepare() {
     // 1、判断当前目录是否为空
@@ -88,7 +94,7 @@ class InitCommand extends Command {
       ],
     });
     if (type === TYPE_PROJECT) {
-      info = await inquirer.prompt([
+      const projectInfo = await inquirer.prompt([
         {
           type: "input",
           name: "projectName",
@@ -124,7 +130,10 @@ class InitCommand extends Command {
           },
         },
       ]);
-      console.log(info);
+      info = {
+        type,
+        ...projectInfo
+      }
     } else if (type === TYPE_COMPONENT) {
     }
 
