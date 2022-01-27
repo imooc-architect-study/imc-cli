@@ -4,6 +4,7 @@ const fse = require("fs-extra");
 const inquirer = require("inquirer");
 const semver = require("semver");
 const { Command, log } = require("@imc-cli/utils");
+const getProjectTemplate = require('./getProjectTemplate.js')
 
 const TYPE_PROJECT = "project";
 
@@ -16,6 +17,8 @@ class InitCommand extends Command {
     this.projectName = this._argv[0] || "";
     // 是否强制初始化项目
     this.force = !!options.force;
+    this.projectInfo = null
+    this.template = []
     log.verbose("projectName", this.projectName);
     log.verbose("force", this.force);
   }
@@ -28,6 +31,7 @@ class InitCommand extends Command {
       const projectInfo = await this.prepare();
       if (projectInfo) {
         log.verbose('projectInfo', projectInfo)
+        this.projectInfo = projectInfo
         this.downloadTemplate()
       }
     } catch (error) {
@@ -35,11 +39,24 @@ class InitCommand extends Command {
     }
   }
 
-  downloadTemplate(){}
+  downloadTemplate() {
+    console.log(this.projectInfo);
+    console.log(this.template);
+  }
 
   async prepare() {
-    // 1、判断当前目录是否为空
-    // 2、是否启动强制更新
+    // 1、先判断模板是否存在，不存在后面的操作就不存在意义了
+    // 2、判断当前目录是否为空
+    // 3、是否启动强制更新
+
+    // 调用api获取服务端的模板数据
+    const template = await getProjectTemplate()
+
+    if (!template || template.length === 0) {
+      throw new Error('项目模板不存在')
+    }
+    // 保存模板列表
+    this.template = template
 
     // 获取当前所在的位置
     const localPath = process.cwd();
@@ -129,6 +146,12 @@ class InitCommand extends Command {
             return !!ret ? ret : v;
           },
         },
+        {
+          type: 'list',
+          name: "projectTemplate",
+          message: "请选择项目模板",
+          choices:this.createProjectChoices()
+        }
       ]);
       info = {
         type,
@@ -149,6 +172,15 @@ class InitCommand extends Command {
       return !file.startsWith(".") && ["node_modules"].indexOf(file) < 0;
     });
     return fileList.length === 0;
+  }
+
+  createProjectChoices() {
+    return this.template.map(item => {
+      return {
+        value: item.npmName,
+        name:item.name
+      }
+    })
   }
 }
 

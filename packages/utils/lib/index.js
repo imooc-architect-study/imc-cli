@@ -12,4 +12,6 @@ const types = require("./types/index.js");
 
 const Command = require('./command/index.js')
 
-module.exports = { log, npmUtils, exec, Package, types,Command };
+const request = require('./request/index.js')
+
+module.exports = { log, npmUtils, exec, Package, types,Command,request };
