@@ -1,10 +1,11 @@
 "use strict";
 
 const fse = require("fs-extra");
+const path = require("path");
 const inquirer = require("inquirer");
 const semver = require("semver");
-const { Command, log } = require("@imc-cli/utils");
-const getProjectTemplate = require('./getProjectTemplate.js')
+const { Command, log, Package, spinnerStart } = require("@imc-cli/utils");
+const getProjectTemplate = require("./getProjectTemplate.js");
 
 const TYPE_PROJECT = "project";
 
@@ -17,8 +18,8 @@ class InitCommand extends Command {
     this.projectName = this._argv[0] || "";
     // 是否强制初始化项目
     this.force = !!options.force;
-    this.projectInfo = null
-    this.template = []
+    this.projectInfo = null;
+    this.template = [];
     log.verbose("projectName", this.projectName);
     log.verbose("force", this.force);
   }
@@ -30,18 +31,55 @@ class InitCommand extends Command {
       // 3、安装模板
       const projectInfo = await this.prepare();
       if (projectInfo) {
-        log.verbose('projectInfo', projectInfo)
-        this.projectInfo = projectInfo
-        this.downloadTemplate()
+        log.verbose("projectInfo", projectInfo);
+        this.projectInfo = projectInfo;
+        await this.downloadTemplate();
       }
     } catch (error) {
       log.error(error.message);
     }
   }
 
-  downloadTemplate() {
-    console.log(this.projectInfo);
-    console.log(this.template);
+  async downloadTemplate() {
+    // 用户选择的项目模板
+    const { projectTemplate } = this.projectInfo;
+    const templateInfo = this.template.find(
+      (item) => item.npmName === projectTemplate
+    );
+    // 缓存目录
+    const homePath = process.env.CLI_HOME_PATH;
+    // 模板存储路径
+    const targetPath = path.resolve(homePath, "template");
+    const storeDir = path.resolve(targetPath, "node_modules");
+    const { npmName, version } = templateInfo;
+    const templateNpm = new Package({
+      targetPath,
+      storeDir,
+      packageName: npmName,
+      packageVersion: version,
+    });
+    let spinner;
+    if (!(await templateNpm.exits())) {
+      try {
+        spinner = spinnerStart("正在下载模板...");
+        await templateNpm.install();
+        log.success("模板下载成功");
+      } catch (error) {
+        throw error;
+      } finally {
+        spinner && spinner.stop();
+      }
+    } else {
+      try {
+        spinner = spinnerStart("正在更新模板...");
+        await templateNpm.update();
+        log.success("模板更新成功");
+      } catch (error) {
+        throw error;
+      } finally {
+        spinner.stop();
+      }
+    }
   }
 
   async prepare() {
@@ -50,13 +88,13 @@ class InitCommand extends Command {
     // 3、是否启动强制更新
 
     // 调用api获取服务端的模板数据
-    const template = await getProjectTemplate()
+    const template = await getProjectTemplate();
 
     if (!template || template.length === 0) {
-      throw new Error('项目模板不存在')
+      throw new Error("项目模板不存在");
     }
     // 保存模板列表
-    this.template = template
+    this.template = template;
 
     // 获取当前所在的位置
     const localPath = process.cwd();
@@ -133,7 +171,7 @@ class InitCommand extends Command {
           validate(v) {
             const done = this.async();
             setTimeout(function () {
-              const ret = !!semver.valid(v)
+              const ret = !!semver.valid(v);
               if (!ret) {
                 done("请输入合法版本号");
                 return;
@@ -147,16 +185,16 @@ class InitCommand extends Command {
           },
         },
         {
-          type: 'list',
+          type: "list",
           name: "projectTemplate",
           message: "请选择项目模板",
-          choices:this.createProjectChoices()
-        }
+          choices: this.createProjectChoices(),
+        },
       ]);
       info = {
         type,
-        ...projectInfo
-      }
+        ...projectInfo,
+      };
     } else if (type === TYPE_COMPONENT) {
     }
 
@@ -175,12 +213,12 @@ class InitCommand extends Command {
   }
 
   createProjectChoices() {
-    return this.template.map(item => {
+    return this.template.map((item) => {
       return {
         value: item.npmName,
-        name:item.name
-      }
-    })
+        name: item.name,
+      };
+    });
   }
 }
 

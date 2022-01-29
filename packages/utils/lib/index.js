@@ -14,4 +14,6 @@ const Command = require('./command/index.js')
 
 const request = require('./request/index.js')
 
-module.exports = { log, npmUtils, exec, Package, types,Command,request };
+const spinnerStart = require('./spinner/index.js')
+
+module.exports = { log, npmUtils, exec, Package, types,Command,request,spinnerStart };
