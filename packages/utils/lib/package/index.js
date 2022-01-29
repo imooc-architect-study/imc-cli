@@ -50,20 +50,20 @@ class Package {
   async update() {
     await this.prepare()
     // 获取最新npm模块版本号
-    const latestNpmVersion = await npmUtils.getNpmLatestVersion(
-      this.packageName
-    );
-    // 查询最新版本号对应的路径是否存在
-    const latestFilePath = this.getSpecificCacheFilePath(latestNpmVersion)
+    // const latestNpmVersion = await npmUtils.getNpmLatestVersion(
+    //   this.packageName
+    // );
+    // 查询版本号对应的路径是否存在
+    const latestFilePath = this.getSpecificCacheFilePath(this.packageVersion)
     // 如果不存在，则直接安装最新版本
     if (!pathExists(latestFilePath)) {
       await npminstall({
         root: this.targetPath,
         storeDir: this.storeDir,
         registry: npmUtils.getDefaultRegistry(),
-        pkgs: [{ name: this.packageName, version: latestNpmVersion }],
+        pkgs: [{ name: this.packageName, version: this.packageVersion }],
       });
-      this.packageVersion = latestNpmVersion
+      // this.packageVersion = latestNpmVersion
     }
 
   }

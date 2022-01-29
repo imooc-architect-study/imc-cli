@@ -1,7 +1,18 @@
-const ora = require('ora')
+const ora = require("ora");
 
-function spinnerStart(message='loading') {
-    return ora(message).start()
+let spinner;
+
+function start(message = "loading") {
+    stop();
+  spinner = ora(message).start();
+  return spinner;
 }
 
-module.exports = spinnerStart
+function stop() {
+  if (spinner) {
+    spinner.stop();
+    spinner = null;
+  }
+}
+
+module.exports = {start,stop};

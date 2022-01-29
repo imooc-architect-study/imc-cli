@@ -1,7 +1,7 @@
 const path = require("path");
-const cp = require("child_process");
 const log = require("../log/index.js");
 const Package = require("../package/index.js");
+const execCommand  = require('../exec-command/index.js');
 
 const SETTINGS = {
   init: "@imooc-cli/init",
@@ -81,7 +81,7 @@ async function exec() {
       // 4、执行一个js文件，可通过children.send，children.on和process.on，process.send进行通信
       // cp.fork()
       // 通过调用子进程执行代码
-      const child = spawn("node", ["-e", code], {
+      const child = execCommand("node", ["-e", code], {
         cwd: process.cwd(),
         // 子进程中的所有输出都会被打印到父进程中
         // 默认是pipe，输入需要输入子进程的信息，需要通过on去监听，手动去打印
@@ -106,12 +106,6 @@ async function exec() {
   }
 }
 
-// 兼容window操作系统，win10下试了，不需要兼容
-function spawn(command, args, options) {
-  const win32 = process.platform === 'win32'
-  const cmd = win32 ? 'cmd' : command
-  const cmdArgs = win32 ? ['/c'].concat(command, args) : args
-  return cp.spawn(cmd,cmdArgs,options || {})
-}
+
 
 module.exports = exec;

@@ -10,10 +10,25 @@ const Package = require("./package/index.js");
 
 const types = require("./types/index.js");
 
-const Command = require('./command/index.js')
+const Command = require("./command/index.js");
 
-const request = require('./request/index.js')
+const request = require("./request/index.js");
 
-const spinnerStart = require('./spinner/index.js')
+const spinner = require("./spinner/index.js");
 
-module.exports = { log, npmUtils, exec, Package, types,Command,request,spinnerStart };
+const execCommand = require("./exec-command/index.js");
+
+const kebabCase = require("./kebab-case/index.js");
+
+module.exports = {
+  log,
+  npmUtils,
+  exec,
+  Package,
+  types,
+  Command,
+  request,
+  spinner,
+  execCommand,
+  kebabCase,
+};

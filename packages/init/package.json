@@ -28,7 +28,9 @@
   },
   "dependencies": {
     "@imc-cli/utils": "file:../utils",
+    "ejs": "^3.1.6",
     "fs-extra": "^10.0.0",
+    "glob": "^7.2.0",
     "inquirer": "^8.2.0",
     "semver": "^7.3.5"
   }
