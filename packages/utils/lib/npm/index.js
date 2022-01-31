@@ -42,7 +42,7 @@ async function getNpmVersions(npmName, registry) {
 function getLatestSemverVersion(baseVersion, versions) {
   return versions
     .filter((version) => semver.satisfies(version, `^${baseVersion}`))
-    .sort((a, b) => semver.gt(b, a));
+    .sort((a, b) => semver.gt(b, a)?1:-1);
 }
 
 // 获取最新的版本号
@@ -59,7 +59,7 @@ async function getNpmLatestSemverVersion(baseVersion, npmName, registry) {
 async function getNpmLatestVersion(npmName, registry) {
   const versions = await getNpmVersions(npmName, registry);
   if (versions && versions.length > 0) {
-    return versions.sort((a, b) => semver.gt(b, a))[0];
+    return versions.sort((a, b) => semver.gt(b, a)?1:-1)[0];
   }
   return null;
 }

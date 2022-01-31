@@ -12,7 +12,7 @@ const {
   Package,
   spinner,
   execCommand,
-  kebabCase,
+  types,
 } = require("@imc-cli/utils");
 const getProjectTemplate = require("./getProjectTemplate.js");
 
@@ -42,7 +42,7 @@ class InitCommand extends Command {
     this.templateInfo = null;
     // 模板npm包管理
     this.templateNpm = null;
-    this.template = [];
+    this.templateList = [];
     log.verbose("projectName", this.projectName);
     log.verbose("force", this.force);
   }
@@ -98,11 +98,13 @@ class InitCommand extends Command {
       log.success("安装模板成功");
 
       // 处理模板
-      await this.renderTemplate({ ignore: ["node_modules/**","public/**"] });
+      await this.renderTemplate({ ignore: this.templateInfo.ignore || [] });
 
       const { installCommand, startCommand } = this.templateInfo;
+      log.info("执行安装依赖命令");
       // 执行安装命令
       await this.execCommand(installCommand, "依赖安装过程中失败");
+      log.info("执行启动命令");
       // 执行启动命令
       await this.execCommand(startCommand, "启动过程中失败");
     } catch (error) {
@@ -113,31 +115,35 @@ class InitCommand extends Command {
 
   async installCustomTemplate() {
     console.log("安装自定义模板");
+    // 1、根据package.json获取入口文件
+    // 2、require入口文件
+    // 3、传入参数，执行函数
+
   }
 
   // 处理模板
   async renderTemplate(options) {
     return new Promise(async (resolve, reject) => {
-      const fileList = await this.getAllTemplateFiles(options )
-      const taskList = fileList.map(file => this.ejsRender(file))
-      Promise.all(taskList).then(resolve).catch(reject)
+      const fileList = await this.getAllTemplateFiles(options);
+      const taskList = fileList.map((file) => this.ejsRender(file));
+      Promise.all(taskList).then(resolve).catch(reject);
     });
   }
 
   // 渲染ejs模板
   ejsRender(filename) {
     return new Promise((resolve, reject) => {
-      const cwd = process.cwd()
-      const filePath = path.resolve(cwd,filename)
-      ejs.renderFile(filePath, this.projectInfo, {}, function(err, str){
+      const cwd = process.cwd();
+      const filePath = path.resolve(cwd, filename);
+      ejs.renderFile(filePath, this.projectInfo, {}, function (err, str) {
         if (err) {
-          reject(err)
-          return
+          reject(err);
+          return;
         }
-        fse.writeFileSync(filePath,str)
-        resolve(str)
+        fse.writeFileSync(filePath, str);
+        resolve(str);
+      });
     });
-    })
   }
 
   // 获取模板文件·
@@ -193,9 +199,9 @@ class InitCommand extends Command {
 
   async downloadTemplate() {
     // 用户选择的项目模板
-    const { projectTemplate } = this.projectInfo;
-    this.templateInfo = this.template.find(
-      (item) => item.npmName === projectTemplate
+    const { template } = this.projectInfo;
+    this.templateInfo = this.templateList.find(
+      (item) => item.npmName === template
     );
     // 缓存目录
     const homePath = process.env.CLI_HOME_PATH;
@@ -239,13 +245,13 @@ class InitCommand extends Command {
     // 3、是否启动强制更新
 
     // 调用api获取服务端的模板数据
-    const template = await getProjectTemplate();
+    const templateList = await getProjectTemplate();
 
-    if (!template || template.length === 0) {
+    if (!templateList || templateList.length === 0) {
       throw new Error("项目模板不存在");
     }
     // 保存模板列表
-    this.template = template;
+    this.templateList = templateList;
 
     // 获取当前所在的位置
     const localPath = process.cwd();
@@ -288,7 +294,6 @@ class InitCommand extends Command {
   async getProjectInfo() {
     // 1、选择创建项目或者组件
     // 2、获取项目基本信息
-    let info = null;
     const { type } = await inquirer.prompt({
       type: "list",
       name: "type",
@@ -299,62 +304,82 @@ class InitCommand extends Command {
         { name: "组件", value: TYPE_COMPONENT },
       ],
     });
+    // 过滤模板
+    this.templateList = this.templateList.filter((tpl) => {
+      if (types.isArray(tpl.tag)) {
+        return tpl.tag.includes(type);
+      }
+      return true;
+    });
+    const title = type === TYPE_PROJECT ? "项目" : "组件";
+    const promptList = [];
+    const obj = {};
+    if (!this.projectName) {
+      // 用户没有在命令行中输入项目名称时，需要询问项目名称
+      promptList.push({
+        type: "input",
+        name: "name",
+        message: `请输入${title}名称`,
+        // 校验输入的内容
+        validate(v) {
+          return typeof v === "string";
+        },
+        // 处理输入的内容，也就是最终的到的结果
+        filter(v) {
+          return v;
+        },
+      });
+    } else {
+      obj.name = this.projectName;
+    }
+    promptList.push(
+      {
+        type: "input",
+        name: "version",
+        message: `请输入${title}版本号`,
+        default: "1.0.0",
+        validate(v) {
+          const done = this.async();
+          setTimeout(function () {
+            const ret = !!semver.valid(v);
+            if (!ret) {
+              done("请输入合法版本号");
+              return;
+            }
+            done(null, true);
+          }, 0);
+        },
+        filter(v) {
+          const ret = semver.valid(v);
+          return !!ret ? ret : v;
+        },
+      },
+      {
+        type: "list",
+        name: "template",
+        message: `请选择${title}模板`,
+        choices: this.createProjectChoices(),
+      }
+    );
     if (type === TYPE_PROJECT) {
-      const projectInfo = await inquirer.prompt([
-        {
-          type: "input",
-          name: "projectName",
-          message: "请输入项目名称",
-          // 校验输入的内容
-          validate(v) {
-            return typeof v === "string";
-          },
-          // 处理输入的内容，也就是最终的到的结果
-          filter(v) {
-            return v;
-          },
+    } else if (type === TYPE_COMPONENT) {
+      promptList.push({
+        type: "input",
+        name: "description",
+        message: "请输入描述信息",
+        // 校验输入的内容
+        validate(v) {
+          return typeof v === "string";
         },
-        {
-          type: "input",
-          name: "projectVersion",
-          message: "请输入项目版本号",
-          default: "1.0.0",
-          validate(v) {
-            const done = this.async();
-            setTimeout(function () {
-              const ret = !!semver.valid(v);
-              if (!ret) {
-                done("请输入合法版本号");
-                return;
-              }
-              done(null, true);
-            }, 0);
-          },
-          filter(v) {
-            const ret = semver.valid(v);
-            return !!ret ? ret : v;
-          },
-        },
-        {
-          type: "list",
-          name: "projectTemplate",
-          message: "请选择项目模板",
-          choices: this.createProjectChoices(),
-        },
-      ]);
-      info = {
+      });
+    }
+    const projectInfo = await inquirer.prompt(promptList);
+
+    return {
+        ...obj,
         type,
         ...projectInfo,
       };
-    } else if (type === TYPE_COMPONENT) {
-    }
-
-    if (info && info.projectName) {
-      // 格式化名称
-      info.className = kebabCase(info.projectName).replace(/^-/, "");
-    }
-
-    return info;
   }
 
   // 判断当前目录是否为空
@@ -369,7 +394,7 @@ class InitCommand extends Command {
   }
 
   createProjectChoices() {
-    return this.template.map((item) => {
+    return this.templateList.map((item) => {
       return {
         value: item.npmName,
         name: item.name,
