@@ -9,7 +9,7 @@ const pathExists = require("path-exists").sync;
 const dotenv = require("dotenv");
 const { Command } = require("commander");
 const { log, npmUtils, exec } = require("@imc-cli/utils");
-// const init = require("@imc-cli/init");
+const publish = require("@imc-cli/publish");
 const constants = require("./const.js");
 const pkg = require("../package.json");
 
@@ -44,7 +44,6 @@ async function prepare() {
 function checkPkgVersion() {
   log.info("cli", pkg.version);
 }
-
 
 function checkRoot() {
   // 检查root账号，如果用户是通过root去创建的文件，其他用户去修改会导致报错
@@ -109,8 +108,17 @@ function registerCommander() {
   // 注册init命令
   program
     .command("init [projectName]")
+    .description("初始化模板")
     .option("-f,--force", "是否强制初始化项目", false)
     .action(exec);
+
+  // 注册publish命令
+  program
+    .command("publish")
+    .description("发布模板")
+    .option("--refreshServer", "强制更新远程git仓库")
+    .option("--refreshToken", "强制更新远程仓库token")
+    .action(publish);
 
   // 监听参数
   program.on("option:debug", () => {

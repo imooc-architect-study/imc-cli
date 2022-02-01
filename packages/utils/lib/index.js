@@ -20,6 +20,10 @@ const execCommand = require("./exec-command/index.js");
 
 const kebabCase = require("./kebab-case/index.js");
 
+const Git = require('./git/index.js')
+
+const tools = require('./tools/index.js')
+
 module.exports = {
   log,
   npmUtils,
@@ -31,4 +35,6 @@ module.exports = {
   spinner,
   execCommand,
   kebabCase,
+  Git,
+  tools
 };

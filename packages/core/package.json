@@ -23,7 +23,7 @@
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
   "dependencies": {
-    "@imc-cli/init": "file:../init",
+    "@imc-cli/publish": "file:../publish",
     "@imc-cli/utils": "file:../utils",
     "colors": "^1.4.0",
     "commander": "^8.3.0",

@@ -1,9 +1,12 @@
 {
-  "name": "@imc-cli/utils",
+  "name": "@imc-cli/publish",
   "version": "1.0.0",
-  "description": "imc-cli utils",
+  "description": "imc-cli publish",
+  "keywords": [
+    "publish"
+  ],
   "author": "c10342 <1376023740@qq.com>",
-  "homepage": "",
+  "homepage": "https://github.com/imooc-architect-study/imc-cli#readme",
   "license": "ISC",
   "main": "lib/index.js",
   "directories": {
@@ -16,23 +19,20 @@
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imooc-architect-study/imc-cli.git"
+  },
   "scripts": {
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
+  "bugs": {
+    "url": "https://github.com/imooc-architect-study/imc-cli/issues"
+  },
   "dependencies": {
-    "axios": "^0.25.0",
+    "@imc-cli/utils": "file:../utils",
     "colors": "^1.4.0",
     "fs-extra": "^10.0.0",
-    "inquirer": "^8.2.0",
-    "kebab-case": "^1.0.1",
-    "npminstall": "^5.4.0",
-    "npmlog": "^6.0.0",
-    "ora": "^5.4.1",
-    "path-exists": "^4.0.0",
-    "pkg-dir": "^5.0.0",
-    "semver": "^7.3.5",
-    "simple-git": "^3.1.1",
-    "terminal-link": "^2.1.1",
-    "url-join": "^4.0.1"
+    "semver": "^7.3.5"
   }
 }
