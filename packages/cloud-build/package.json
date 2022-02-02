@@ -1,0 +1,32 @@
+{
+  "name": "@imc-cli/cloud-build",
+  "version": "1.0.0",
+  "description": "> TODO: description",
+  "author": "c10342 <1376023740@qq.com>",
+  "homepage": "https://github.com/imooc-architect-study/imc-cli#readme",
+  "license": "ISC",
+  "main": "lib/index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "__tests__"
+  },
+  "files": [
+    "lib"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imooc-architect-study/imc-cli.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: run tests from root\" && exit 1"
+  },
+  "bugs": {
+    "url": "https://github.com/imooc-architect-study/imc-cli/issues"
+  },
+  "dependencies": {
+    "socket.io-client": "^2.0.1"
+  }
+}

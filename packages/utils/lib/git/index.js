@@ -12,7 +12,9 @@ const Gitee = require("./gitee");
 const GIT_ROOT_DIR = ".git";
 // 缓存文件
 const GIT_SERVER_FILE = ".git_server";
-const GIT_TOKEN_FILE ='.git_token'
+const GIT_TOKEN_FILE = '.git_token'
+const GIT_OWNER_FILE = '.git_owner'
+const GIT_LOGIN_FILE = '.git_login'
 
 const GIT_SERVER_TYPE = { github: "github", gitee: "gitee" };
 
@@ -21,19 +23,50 @@ const GIT_SERVER_TYPE_LIST = [
   { name: "Gitee", value: GIT_SERVER_TYPE.gitee },
 ];
 
+const GIT_OWNER_TYPE = {
+  user: 'user',
+  org:'org'
+}
+
+const GIT_OWNER_TYPE_LIST = [
+  {
+    name: '个人',
+    value:GIT_OWNER_TYPE.user
+  },
+  {
+    name: '组织',
+    value:GIT_OWNER_TYPE.org
+  }
+]
+
+const GIT_OWNER_TYPE_ONLY = [
+  {
+    name: '个人',
+    value:GIT_OWNER_TYPE.user
+  },
+]
+
 class Git {
-  constructor({ name, version, dir }, { refreshServer = false,refreshToken = false } = {}) {
+  constructor({ name, version, dir }, { refreshServer = false,refreshToken = false,refreshOwner=false } = {}) {
     // 是否强制更新远程托管平台
     this.refreshServer = refreshServer;
     // 强制更新token
     this.refreshToken = refreshToken
+    // 强制刷新仓库类型
+    this.refreshOwner = refreshOwner
     // 项目名称
     this.name = name;
     // 项目版本号
     this.version = version;
     this.token = null
+    // 用户信息
     this.user = null
+    // 用户所属组织
     this.orgs = null
+    // 仓库类型
+    this.owner = null
+    // 登录名
+    this.login = null
     // 项目路径
     this.dir = dir;
     this.git = simpleGit(dir);
@@ -49,6 +82,8 @@ class Git {
     await this.checkGitToken()
     // 获取用户信息和组织
     await this.getUserAnrOrgs()
+    // 获取仓库类型
+    await this.checkGitOwner()
   }
 
   async checkGitToken() {
@@ -107,9 +142,47 @@ class Git {
     if (!this.orgs) {
       throw new Error('获取用户组织失败')
     }
-    console.log(this.user);
-    console.log(this.orgs);
     log.success(this.gitServer.type,'用户和组织信息获取成功')
+  }
+
+  async checkGitOwner() {
+    // 仓库类型文件路径
+    const ownerPath = this.createPath(GIT_OWNER_FILE)
+    // 登录名文件路劲
+    const loginPath = this.createPath(GIT_LOGIN_FILE)
+    let owner = tools.readFile(ownerPath)
+    let login = tools.readFile(loginPath)
+    if (!owner || !login || this.refreshOwner) {
+      owner = (await inquirer.prompt({
+        type: 'list',
+        name: 'owner',
+        message: '请选择远程仓库类型',
+        default:GIT_OWNER_TYPE.user,
+        choices:this.orgs.length>0?GIT_OWNER_TYPE_LIST:GIT_OWNER_TYPE_ONLY
+      })).owner
+      if (owner === GIT_OWNER_TYPE.user) {
+        // 个人仓库
+        login = this.user.login
+      } else {
+        // 组织仓库
+        login = (await inquirer.prompt({
+          type: 'list',
+          name: 'login',
+          message: '请选择组织',
+          choices: this.orgs.map(item => ({
+            name: item.login,
+            value:item.value
+          }))
+        })).login
+      }
+      tools.writeFile(ownerPath,owner)
+      tools.writeFile(loginPath,login)
+      log.success('owner写入成功',`${owner} -> ${ownerPath}`)
+      log.success('login写入成功',`${login} -> ${loginPath}`)
+    }
+
+    this.owner = owner
+    this.login = login
   }
 
   createGitServer(gitServer) {
