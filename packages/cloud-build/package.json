@@ -27,6 +27,7 @@
     "url": "https://github.com/imooc-architect-study/imc-cli/issues"
   },
   "dependencies": {
-    "socket.io-client": "^2.0.1"
+    "socket.io-client": "^2.0.1",
+    "@imc-cli/utils": "file:../utils"
   }
 }

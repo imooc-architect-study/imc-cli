@@ -115,10 +115,11 @@ function registerCommander() {
   // 注册publish命令
   program
     .command("publish")
-    .description("发布模板")
-    .option("--refreshServer", "强制更新远程git仓库")
-    .option("--refreshToken", "强制更新远程仓库token")
-    .option("--refreshOwner", "强制更新远程仓库类型")
+    .description("发布项目")
+    .option('--buildCmd <buildCmd>')
+    // .option("--refreshServer", "强制更新远程git仓库")
+    // .option("--refreshToken", "强制更新远程仓库token")
+    // .option("--refreshOwner", "强制更新远程仓库类型")
     .action(publish);
 
   // 监听参数

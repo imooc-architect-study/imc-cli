@@ -30,9 +30,11 @@
     "url": "https://github.com/imooc-architect-study/imc-cli/issues"
   },
   "dependencies": {
+    "@imc-cli/cloud-build": "file:../cloud-build",
     "@imc-cli/utils": "file:../utils",
     "colors": "^1.4.0",
     "fs-extra": "^10.0.0",
-    "semver": "^7.3.5"
+    "semver": "^7.3.5",
+    "simple-git": "^3.1.1"
   }
 }
