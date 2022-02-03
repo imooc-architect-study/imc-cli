@@ -1,10 +1,7 @@
 {
-  "name": "@imc-cli/publish",
+  "name": "@imc-cli/git",
   "version": "1.0.0",
-  "description": "imc-cli publish",
-  "keywords": [
-    "publish"
-  ],
+  "description": "> TODO: description",
   "author": "c10342 <1376023740@qq.com>",
   "homepage": "https://github.com/imooc-architect-study/imc-cli#readme",
   "license": "ISC",
@@ -30,11 +27,8 @@
     "url": "https://github.com/imooc-architect-study/imc-cli/issues"
   },
   "dependencies": {
-    "@imc-cli/cloud-build": "file:../cloud-build",
     "@imc-cli/utils": "file:../utils",
-    "@imc-cli/git": "file:../git",
-    "colors": "^1.4.0",
-    "fs-extra": "^10.0.0",
-    "semver": "^7.3.5"
+    "inquirer": "^8.2.0",
+    "simple-git": "^3.1.1"
   }
 }

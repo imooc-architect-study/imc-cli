@@ -7,16 +7,12 @@ const colors = require("colors");
 const { log } = require("@imc-cli/utils");
 const CloudBuild = require("@imc-cli/cloud-build");
 const LOWEST_NODE_VERSION = "12.0.0";
-const simpleGit = require("simple-git");
+const Git = require("@imc-cli/git");
 
 class PublishCommand {
   constructor(options) {
     this.options = options;
     this.git = null;
-    // 仓库地址
-    this.repo = null;
-    // 分支
-    this.branch = null
     this.start();
   }
 
@@ -42,41 +38,15 @@ class PublishCommand {
     }
   }
 
-  init() {
-    const dir = process.cwd();
-    this.git = simpleGit(dir);
-    // // https://gitee.com/c10342/imc-cli-test.git
-    // const userName = (await this.git.getConfig('user.name')).value
-    // console.log(userName);
-  }
-
-  // 获取仓库地址
-  async getRepo() {
-    const reg = /((http(s)?:\/\/([^\/]+?\/){2}|git@[^:]+:[^\/]+?\/).*?.git)/;
-    const ret = await this.git.remote({ "-v": true });
-    const arr = ret.match(reg);
-    if (arr && arr[0]) {
-      return arr[0];
-    }
-    // /(?<=\/)[^\/]+(?=\.git)/
-
-    return null;
-  }
-
-  // 获取分支
-  async getBranch() {
-    const ret = await this.git.branch();
-    return ret.current
-  }
+  init() {}
 
   async exec() {
     try {
       const startTime = new Date().getTime();
       // 1、初始化检查
       await this.prepare();
-      // 2、git flow自动化，直接忽略，没啥用
-      // const git = new Git(this.projectInfo,this.options);
-      // await git.prepare();
+      // 2、git flow自动化
+      await this.gitCheck();
       // 3、云构建和云发布
       await this.build();
       const endTime = new Date().getTime();
@@ -86,33 +56,34 @@ class PublishCommand {
     }
   }
 
-   async build() {
+  async gitCheck() {
+    this.git = new Git(process.cwd());
+    await this.git.prepare();
+    await this.git.checkCommit()
+  }
+
+  async build() {
     // 获取打包命令
     const buildCmd = this.options.buildCmd || "npm run build";
 
-     const cloudBuild = new CloudBuild({ buildCmd, repo: this.repo, branch: this.branch });
+    const cloudBuild = new CloudBuild({
+      buildCmd,
+      repo: this.git.repo,
+      branch: this.git.branch,
+    });
     //  初始化
-     await cloudBuild.init();
+    await cloudBuild.init();
     //  开始打包
-     await cloudBuild.build()
+    await cloudBuild.build();
   }
 
   // 预检查
   async prepare() {
-    
-    this.repo = await this.getRepo()
-    if (!this.repo) {
-      throw new Error('查询不到仓库地址')
-    }
-    this.branch = await this.getBranch()
-    if (!this.branch) {
-      throw new Error('获取不到当前分支')
-    }
     // 1、检查是否为npm项目
     // 2、确认是否包含name，version，build命令
     const projectPath = process.cwd();
     const pckPath = path.resolve(projectPath, "package.json");
-    // log.verbose("package.json", pckPath);
+    log.verbose("package.json", pckPath);
     if (!fse.existsSync(pckPath)) {
       throw new Error("package.json不存在");
     }
