@@ -58,6 +58,7 @@ class PublishCommand {
     if (arr && arr[0]) {
       return arr[0];
     }
+    // /(?<=\/)[^\/]+(?=\.git)/
 
     return null;
   }
@@ -65,9 +66,7 @@ class PublishCommand {
   // 获取分支
   async getBranch() {
     const ret = await this.git.branch();
-    const branches = ret.branches || []
-    const res = Object.keys(branches).map(key=>branches[key]).find(item=>item.current)
-    return res?res.name:null
+    return ret.current
   }
 
   async exec() {
@@ -79,7 +78,7 @@ class PublishCommand {
       // const git = new Git(this.projectInfo,this.options);
       // await git.prepare();
       // 3、云构建和云发布
-       this.build();
+      await this.build();
       const endTime = new Date().getTime();
       log.info(`本次发布耗时：${Math.floor((endTime - startTime) / 1000)}秒`);
     } catch (error) {
@@ -87,12 +86,15 @@ class PublishCommand {
     }
   }
 
-   build() {
+   async build() {
     // 获取打包命令
     const buildCmd = this.options.buildCmd || "npm run build";
 
-    const cloudBuild = new CloudBuild({ buildCmd, repo: this.repo ,branch:this.branch});
-    cloudBuild.init();
+     const cloudBuild = new CloudBuild({ buildCmd, repo: this.repo, branch: this.branch });
+    //  初始化
+     await cloudBuild.init();
+    //  开始打包
+     await cloudBuild.build()
   }
 
   // 预检查
@@ -106,14 +108,14 @@ class PublishCommand {
     if (!this.branch) {
       throw new Error('获取不到当前分支')
     }
-    // 1、检查时候为npm项目
+    // 1、检查是否为npm项目
     // 2、确认是否包含name，version，build命令
-    // const projectPath = process.cwd();
-    // const pckPath = path.resolve(projectPath, "package.json");
+    const projectPath = process.cwd();
+    const pckPath = path.resolve(projectPath, "package.json");
     // log.verbose("package.json", pckPath);
-    // if (!fse.existsSync(pckPath)) {
-    //   throw new Error("package.json不存在");
-    // }
+    if (!fse.existsSync(pckPath)) {
+      throw new Error("package.json不存在");
+    }
     // const pck = fse.readJsonSync(pckPath);
     // const { name, version, scripts } = pck;
     // log.verbose("package.json", name, version, scripts);
