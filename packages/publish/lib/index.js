@@ -4,11 +4,12 @@ const path = require("path");
 const fse = require("fs-extra");
 const semver = require("semver");
 const colors = require("colors");
-const { log ,request} = require("@imc-cli/utils");
+const { log, request } = require("@imc-cli/utils");
 const CloudBuild = require("@imc-cli/cloud-build");
 const LOWEST_NODE_VERSION = "12.0.0";
 const Git = require("@imc-cli/git");
-const terminalLink = require('terminal-link')
+const terminalLink = require("terminal-link");
+const inquirer = require("inquirer");
 
 class PublishCommand {
   constructor(options) {
@@ -47,6 +48,14 @@ class PublishCommand {
       await this.gitCheck();
       // 3、云构建和云发布
       await this.build();
+      if (this.options.prod) {
+        // 升级版本号
+        await this.updateVersion();
+        // 打tag
+        await this.addTag();
+        // 合并分支到主线
+        await this.mergeBranchToMaster()
+      }
       const endTime = new Date().getTime();
       log.info(`本次发布耗时：${Math.floor((endTime - startTime) / 1000)}秒`);
     } catch (error) {
@@ -54,11 +63,63 @@ class PublishCommand {
     }
   }
 
+  async mergeBranchToMaster() {
+    await this.git.mergeBranchToMaster()
+    log.success(`${this.git.branch}分支代码合并到到master分支成功`)
+  }
+
+  // 打标签
+  async addTag() {
+    const pckPath = path.resolve(process.cwd(), "package.json");
+    const pck = fse.readJsonSync(pckPath);
+    const currentVersion = pck.version;
+    await this.git.addTag(`v${currentVersion}`);
+    log.success(`v${currentVersion} 版本标签创建成功，并推送到远程仓库`);
+  }
+
+  // 升级版本号
+  async updateVersion() {
+    const pckPath = path.resolve(process.cwd(), "package.json");
+    const pck = fse.readJsonSync(pckPath);
+    const currentVersion = pck.version;
+    const version = (
+      await inquirer.prompt({
+        type: "list",
+        name: "version",
+        message: `选择将要升级的版本(当前版本 ${currentVersion} )：`,
+        choices: this.getVersionsList(currentVersion),
+      })
+    ).version;
+    pck.version = version;
+    fse.writeFileSync(pckPath, JSON.stringify(pck, null, 2));
+    await this.git.addCommitted("update:升级版本号");
+    await this.git.pushCommitted(false);
+    log.success("版本号升级成功");
+  }
+
+  getVersionsList(version) {
+    version = version.split("+");
+
+    const currentVersion = version[0];
+    const levels = ["patch", "minor", "major"];
+    const opts = [];
+
+    levels.forEach(function (item) {
+      const val = semver.inc(currentVersion, item);
+      opts.push({
+        name: val,
+        value: val,
+      });
+    });
+
+    return opts;
+  }
+
   async gitCheck() {
     this.git = new Git(process.cwd());
     await this.git.prepare();
     await this.checkGitRemote()
-    await this.git.checkCommit()
+    await this.git.checkCommit();
   }
 
   async build() {
@@ -78,7 +139,7 @@ class PublishCommand {
 
   // 预检查
   async prepare() {
-    this.checkPackageJson()
+    this.checkPackageJson();
   }
 
   checkPackageJson() {
@@ -93,17 +154,19 @@ class PublishCommand {
 
   // 检查当前仓库是否已经在平台注册
   async checkGitRemote() {
-    const res = await request.get('/imcCli/cloudBuildTask/checkTask', {
+    const res = await request.get("/imcCli/cloudBuildTask/checkTask", {
       params: {
         repo: this.git.repo,
-        branch:this.git.branch
-      }
-    })
+        branch: this.git.branch,
+      },
+    });
     if (res.code !== 200) {
       if (res.code === 2) {
-        throw new Error(`${res.message}：${terminalLink('链接','http://127.0.0.1:7001')}`)
+        throw new Error(
+          `${res.message}：${terminalLink("链接", "http://127.0.0.1:7001")}`
+        );
       } else {
-        throw new Error(res.message)
+        throw new Error(res.message);
       }
     }
   }

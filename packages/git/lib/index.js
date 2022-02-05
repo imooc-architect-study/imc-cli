@@ -32,14 +32,14 @@ class Git {
     log.success("远程仓库代码拉取成功");
   }
   // 提交代码到远程仓库
-  async pushCommitted() {
+  async pushCommitted(flag=true) {
     if (!this.fileHasChanged()) {
-      log.notice("没有代码需要提交到远程仓库");
+      flag && log.notice("没有代码需要提交到远程仓库");
       return;
     }
-    log.notice("开始提交代码到远程仓库");
+    flag && log.notice("开始提交代码到远程仓库");
     await this.git.push();
-    log.success("代码成功提交到远程仓库");
+    flag && log.success("代码成功提交到远程仓库");
   }
 // 本地代码仓库是否发生变化
   async fileHasChanged() {
@@ -51,6 +51,18 @@ class Git {
       status.modified.length > 0 ||
       status.renamed.length > 0
     );
+  }
+
+  async addCommitted(message) {
+    if (await this.fileHasChanged()) {
+      const status = await this.git.status();
+      await this.git.add(status.not_added);
+      await this.git.add(status.created);
+      await this.git.add(status.deleted);
+      await this.git.add(status.modified);
+      await this.git.add(status.renamed);
+      await this.git.commit(message);
+    }
   }
 
   // 检查没有提交的代码
@@ -108,6 +120,19 @@ class Git {
     if (!this.branch) {
       throw new Error("获取不到当前分支");
     }
+  }
+
+  // 打标签
+  async addTag(version) {
+    await this.git.addTag(version)
+    await this.git.pushTags('origin')
+  }
+
+  async mergeBranchToMaster() {
+    await this.git.checkout('master')
+    await this.git.mergeFromTo(this.branch, 'master')
+    await this.git.push()
+    await this.git.checkout(this.branch)
   }
 
   // 获取仓库地址

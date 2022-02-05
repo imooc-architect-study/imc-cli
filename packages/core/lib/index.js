@@ -116,7 +116,8 @@ function registerCommander() {
   program
     .command("publish")
     .description("发布项目")
-    .option('--buildCmd <buildCmd>')
+    .option('--buildCmd <buildCmd>','打包构建命令')
+    .option('--prod','生产环境')
     // .option("--refreshServer", "强制更新远程git仓库")
     // .option("--refreshToken", "强制更新远程仓库token")
     // .option("--refreshOwner", "强制更新远程仓库类型")

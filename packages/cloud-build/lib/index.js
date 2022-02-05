@@ -39,6 +39,7 @@ class CloudBuild {
     // 定时器
     this.timer = null;
     this.socket = null;
+    this.finish = false;
     // 参数检查
     this.checkProps();
   }
@@ -124,7 +125,7 @@ class CloudBuild {
   }
 
   onSocketDisconnect() {
-    log.success("disconnect", "云构建任务断开");
+    !this.finish && log.success("disconnect", "云构建任务断开");
     this.disconnectSocket();
   }
 
@@ -142,9 +143,12 @@ class CloudBuild {
       this.socket.on("building", (msg) => {
         console.log(msg);
       });
+      this.socket.on("finish", () => {
+        this.finish = true
+        resolve()
+      });
     });
   }
-
 
   onSocketUpload(msg) {
     const parsedMsg = parseMsg(msg);

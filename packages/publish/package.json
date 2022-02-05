@@ -35,6 +35,7 @@
     "@imc-cli/utils": "file:../utils",
     "colors": "^1.4.0",
     "fs-extra": "^10.0.0",
+    "inquirer": "^8.2.0",
     "semver": "^7.3.5",
     "terminal-link": "^2.1.1"
   }
