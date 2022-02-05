@@ -18,6 +18,12 @@ const FAILED_CODE = [
   "install failed",
   "build failed",
   "uploadPrepare failed",
+  "sSHConnect failed",
+  "compressFile failed",
+  "deleteFile failed",
+  "putFile failed",
+  "unzip failed",
+  "deleleZip failed",
 ];
 
 class CloudBuild {
@@ -58,7 +64,7 @@ class CloudBuild {
 
   doSocketConnectTimeout(fn) {
     this.clearTimer();
-    log.info("设置任务超时时间", `${this.connectTimeout / 1000}秒`);
+    log.info("设置连接超时时间", `${this.connectTimeout / 1000}秒`);
     this.timer = setTimeout(fn, this.connectTimeout);
   }
 
