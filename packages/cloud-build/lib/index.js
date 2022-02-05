@@ -12,7 +12,13 @@ function parseMsg(msg) {
   };
 }
 
-const FAILED_CODE = ["prepare failed",'download failed','install failed','build failed'];
+const FAILED_CODE = [
+  "prepare failed",
+  "download failed",
+  "install failed",
+  "build failed",
+  "uploadPrepare failed",
+];
 
 class CloudBuild {
   constructor(props) {
@@ -22,12 +28,25 @@ class CloudBuild {
     this.repo = props.repo;
     // 分支
     this.branch = props.branch;
-    this.timeout = 5 * 60 * 1000;
     // 连接超时时间
     this.connectTimeout = 5 * 1000;
     // 定时器
     this.timer = null;
     this.socket = null;
+    // 参数检查
+    this.checkProps();
+  }
+
+  checkProps() {
+    const check = (key, value) => {
+      if (!value) {
+        throw new Error(`${key} 的值不能为空`);
+      }
+    };
+
+    check("buildCmd", this.buildCmd);
+    check("repo", this.repo);
+    check("branch", this.branch);
   }
 
   clearTimer() {
@@ -37,13 +56,13 @@ class CloudBuild {
     }
   }
 
-  doTimeout(fn, timeout) {
+  doSocketConnectTimeout(fn) {
     this.clearTimer();
-    log.info("设置任务超时时间", `${timeout / 1000}秒`);
-    this.timer = setTimeout(fn, timeout);
+    log.info("设置任务超时时间", `${this.connectTimeout / 1000}秒`);
+    this.timer = setTimeout(fn, this.connectTimeout);
   }
 
-  disconnect() {
+  disconnectSocket() {
     this.clearTimer();
     if (this.socket) {
       this.socket.disconnect();
@@ -62,52 +81,83 @@ class CloudBuild {
       });
 
       this.socket.on("connect", () => {
-        this.clearTimer();
-        // 客户端唯一id
-        const { id } = this.socket;
-        log.success("云构建任务创建成功", `任务ID：${id}`);
-        this.socket.on(id, (msg) => {
-          const paresdMsg = parseMsg(msg);
-          log.success(paresdMsg.action, paresdMsg.message);
-        });
+        this.onSocketConnect();
         resolve();
       });
 
       // 连接超时处理
-      this.doTimeout(() => {
+      this.doSocketConnectTimeout(() => {
         log.error("云构建服务连接超时，自动终止");
-        this.disconnect();
-      }, this.connectTimeout);
+        this.disconnectSocket();
+      });
 
       this.socket.on("disconnect", () => {
-        log.success("disconnect", "云构建任务断开");
-        this.disconnect();
+        this.onSocketDisconnect();
       });
 
       this.socket.on("error", (err) => {
-        log.error("error", "云构建出错！", err);
-        this.disconnect();
+        this.onSocketError();
         reject(err);
       });
     });
+  }
+
+  onSocketConnect() {
+    this.clearTimer();
+    // 客户端唯一id
+    const { id } = this.socket;
+    log.success("云构建任务创建成功", `任务ID：${id}`);
+    this.socket.on(id, (msg) => {
+      this.onSocketMsg(msg);
+    });
+  }
+
+  onSocketMsg(msg) {
+    const paresdMsg = parseMsg(msg);
+    log.success(paresdMsg.action, paresdMsg.message);
+  }
+
+  onSocketDisconnect() {
+    log.success("disconnect", "云构建任务断开");
+    this.disconnectSocket();
+  }
+
+  onSocketError() {
+    log.error("error", "云构建出错！", err);
+    this.disconnectSocket();
   }
 
   build() {
     return new Promise((resolve, reject) => {
       this.socket.emit("build");
       this.socket.on("build", (msg) => {
-        const parsedMsg = parseMsg(msg);
-        if (FAILED_CODE.indexOf(parsedMsg.action) >= 0) {
-          log.error(parsedMsg.action, parsedMsg.message);
-          this.disconnect();
-        } else {
-          log.success(parsedMsg.action, parsedMsg.message);
-        }
+        this.onSocketBuild(msg);
       });
       this.socket.on("building", (msg) => {
         console.log(msg);
       });
     });
+  }
+
+
+  onSocketUpload(msg) {
+    const parsedMsg = parseMsg(msg);
+    if (FAILED_CODE.indexOf(parsedMsg.action) >= 0) {
+      log.error(parsedMsg.action, parsedMsg.message);
+      this.disconnectSocket();
+    } else {
+      log.success(parsedMsg.action, parsedMsg.message);
+    }
+  }
+
+  onSocketBuild(msg) {
+    const parsedMsg = parseMsg(msg);
+    if (FAILED_CODE.indexOf(parsedMsg.action) >= 0) {
+      log.error(parsedMsg.action, parsedMsg.message);
+      this.disconnectSocket();
+    } else {
+      log.success(parsedMsg.action, parsedMsg.message);
+    }
   }
 }
 

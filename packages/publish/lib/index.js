@@ -4,10 +4,11 @@ const path = require("path");
 const fse = require("fs-extra");
 const semver = require("semver");
 const colors = require("colors");
-const { log } = require("@imc-cli/utils");
+const { log ,request} = require("@imc-cli/utils");
 const CloudBuild = require("@imc-cli/cloud-build");
 const LOWEST_NODE_VERSION = "12.0.0";
 const Git = require("@imc-cli/git");
+const terminalLink = require('terminal-link')
 
 class PublishCommand {
   constructor(options) {
@@ -19,7 +20,6 @@ class PublishCommand {
   start() {
     try {
       this.checkNodeVersion();
-      this.init();
       this.exec();
     } catch (error) {
       log.error(error.message);
@@ -38,14 +38,12 @@ class PublishCommand {
     }
   }
 
-  init() {}
-
   async exec() {
     try {
       const startTime = new Date().getTime();
       // 1、初始化检查
       await this.prepare();
-      // 2、git flow自动化
+      // 2、git 自动化
       await this.gitCheck();
       // 3、云构建和云发布
       await this.build();
@@ -59,6 +57,7 @@ class PublishCommand {
   async gitCheck() {
     this.git = new Git(process.cwd());
     await this.git.prepare();
+    await this.checkGitRemote()
     await this.git.checkCommit()
   }
 
@@ -79,23 +78,34 @@ class PublishCommand {
 
   // 预检查
   async prepare() {
+    this.checkPackageJson()
+  }
+
+  checkPackageJson() {
     // 1、检查是否为npm项目
-    // 2、确认是否包含name，version，build命令
     const projectPath = process.cwd();
     const pckPath = path.resolve(projectPath, "package.json");
     log.verbose("package.json", pckPath);
     if (!fse.existsSync(pckPath)) {
       throw new Error("package.json不存在");
     }
-    // const pck = fse.readJsonSync(pckPath);
-    // const { name, version, scripts } = pck;
-    // log.verbose("package.json", name, version, scripts);
-    // if (!name || !version || !scripts || !scripts.build) {
-    //   throw new Error(
-    //     "package.json信息不全，请检查是否存在name、version和scripts（需提供build命令）"
-    //   );
-    // }
-    // this.projectInfo = { name, version, dir: projectPath };
+  }
+
+  // 检查当前仓库是否已经在平台注册
+  async checkGitRemote() {
+    const res = await request.get('/imcCli/cloudBuildTask/checkTask', {
+      params: {
+        repo: this.git.repo,
+        branch:this.git.branch
+      }
+    })
+    if (res.code !== 200) {
+      if (res.code === 2) {
+        throw new Error(`${res.message}：${terminalLink('链接','http://127.0.0.1:7001')}`)
+      } else {
+        throw new Error(res.message)
+      }
+    }
   }
 }
 
